@@ -1,0 +1,88 @@
+REPOSITORIES: {'final': 'arthurhou.pps.eosdis.nasa.gov',
+               'early': 'jsimpson.pps.eosdis.nasa.gov',
+               'late': 'jsimpson.pps.eosdis.nasa.gov'}
+
+FIELD_KEYS: [dataType,
+             satellite,
+             instrument,
+             algorithmName,
+             startDate-SstartTime-EendTime,
+             sequenceIndicator,
+             VdataVersion,
+             extension]
+
+DATA_LEVELS: {"1A": 'Instrument count, geolocated, at instantaneous field of view (IFOV)',
+              "1B": 'Geolocated, calibrated T b or radar power at IFOV',
+              "1C": 'Intercalibrated brightness temperatures Tc at IFOV',
+              "2A": 'Geolocated geophysical parameters at IFOV from a single instrument',
+              "2B": 'Geolocated geophysical parameters at IFOV from multiple instruments',
+              "3A": 'Space/time averaged geophysical parameters from a single instrument',
+              "3B": 'Space/time averaged geophysical parameters from multiple instruments',
+              "4": 'Combined satellite, ground and/or model data'}
+
+ACCUMULATIONS: {'HR': 'The product accumulates data for 1 hour',
+                'HHR': 'The product accumulates data every half hour',
+                'DAY': 'The product accumulates data for a single day',
+                'PENT': 'The product accumulates data for a 5-day period',
+                '7DAY': 'The product accumulates data for a 7-day period',
+                'MO': 'The product accumulates data for a designated month',
+                'ORBIT': 'The product accumulates data for each orbit'}
+
+# 3IMERGHH data fields, variable names and data units (IMERG_DOC, pag 19)
+
+IMERGHH_FIELDS_UNITS: {
+  'precipitationCal': 'mm/hr',
+  'precipitationUncal': 'mm/hr',
+  'randomError': 'mm/hr',
+  'HQprecipitation': 'mm/hr',
+  'HQprecipSource': 'index values',
+  'HQobservationTime': 'min. into half hour',
+  'IRprecipitation': 'mm/hr',
+  'IRkalmanFilterWeight': 'percent',
+  'probabilityLiquidPrecipitation': 'percent',
+  'precipitationQualityIndex': 'n/a'
+}
+
+IMERGHH_FIELDS_VARIABLES: {
+  'precipitationCal': 'Multi-satellite precipitation estimate with gauge calibration (recommended for general use)',
+  'precipitationUncal': 'Multi-satellite precipitation estimate',
+  'randomError': 'Random error for gauge-calibrated multi-satellite precipitation',
+  'HQprecipitation': 'Merged microwave-only precipitation estimate',
+  'HQprecipSource': 'Microwave satellite source identifier',
+  'HQobservationTime': 'Microwave satellite observation time',
+  'IRprecipitation': 'IR-only precipitation estimate',
+  'IRkalmanFilterWeight': 'Weighting of IR-only precipitation relative to the morphed merged microwave-only precipitation',
+  'probabilityLiquidPrecipitation': 'Probability of liquid precipitation phase',
+  'precipitationQualityIndex': 'Quality Index for precipitationCal field'
+}
+
+HQprecipSource_values: {0: 'no observation',
+                        1: 'TMI',
+                        2: '(unused)',
+                        3: 'AMSR',
+                        4: 'SSMI',
+                        5: 'SSMIS',
+                        6: 'AMSU',
+                        7: 'MHS',
+                        8: 'SAPHIR',
+                        9: 'GMI',
+                        10: '(unused)',
+                        11: 'ATMS',
+                        12: 'AIRS',
+                        13: 'TOVS',
+                        14: 'CRIS',
+                        15: 'Spare CSI 1',
+                        16: 'Spare CSI 2',
+                        17: 'Spare CSI 3',
+                        18: 'Spare CSI 4',
+                        19: 'Spare CSI 5',
+                        20: 'Spare CTSS 1',
+                        21: 'Spare CTSS 2',
+                        22: 'Spare CTSS 3',
+                        23: 'Spare CTSS 4',
+                        24: 'Spare CTSS 5'}
+
+GEO_TRANSFORMATION_PARAMS: {'originX': -180,
+                            'originY': 90,
+                            'pixelWidth': 0.10000000149011612,
+                            'pixelHeight': -0.10000000149011612}

@@ -3,6 +3,7 @@
 """
 
 from ftplib import FTP
+from yaml import load
 import h5py
 import gdal
 import numpy as np
@@ -11,86 +12,16 @@ import logging
 import matplotlib.pyplot as plt
 from gdal_utils import Raster, build_geot
 
-# TODO read credentials from yaml file. Evalute even other parameters
-_USERNAME = 'your_email'
-_PASSWORD = 'your_email'
+with open('credentials.yaml', "r") as f:
+    _credentials = load(f)
+_USERNAME = _credentials['username']
+_PASSWORD = _credentials['password']
 
-_FIELD_KEYS = ['dataType',
-               'satellite',
-               'instrument',
-               'algorithmName',
-               'startDate-SstartTime-EendTime',
-               'sequenceIndicator',
-               'VdataVersion',
-               'extension']
+with open('imerg_info.yaml', "r") as f:
+    imerg_info = load(f)
 
-_DATA_LEVELS = {'1A': 'Instrument count, geolocated, at instantaneous field of view (IFOV)',
-                '1B': 'Geolocated, calibrated T b or radar power at IFOV',
-                '1C': 'Intercalibrated brightness temperatures Tc at IFOV',
-                '2A': 'Geolocated geophysical parameters at IFOV from a single instrument',
-                '2B': 'Geolocated geophysical parameters at IFOV from multiple instruments',
-                '3A': 'Space/time averaged geophysical parameters from a single instrument',
-                '3B': 'Space/time averaged geophysical parameters from multiple instruments',
-                '4': 'Combined satellite, ground and/or model data'}
-
-_ACCUMULATIONS = {'HR': 'The product accumulates data for 1 hour',
-                  'HHR': 'The product accumulates data every half hour',
-                  'DAY': 'The product accumulates data for a single day',
-                  'PENT': 'The product accumulates data for a 5-day period',
-                  '7DAY': 'The product accumulates data for a 7-day period',
-                  'MO': 'The product accumulates data for a designated month',
-                  'ORBIT': 'The product accumulates data for each orbit'}
-
-_REPOSITORIES = {'final': 'arthurhou.pps.eosdis.nasa.gov',
-                 'early': 'jsimpson.pps.eosdis.nasa.gov',
-                 'late': 'jsimpson.pps.eosdis.nasa.gov'}
-
-# 3IMERGHH data fields, variable names and data units (IMERG_DOC, pag 19)
-_IMERGHH_FIELDS = [
-    ('name', 'Units', 'Data field Variable'),
-    ('precipitationCal', 'mm/hr', 'Multi-satellite precipitation estimate with gauge calibration (recommended for '
-                                  'general use)'),
-    ('precipitationUncal', 'mm/hr', 'Multi-satellite precipitation estimate'),
-    ('randomError', 'mm/hr', 'Random error for gauge-calibrated multi-satellite precipitation'),
-    ('HQprecipitation', 'mm/hr', 'Merged microwave-only precipitation estimate'),
-    ('HQprecipSource', 'index values', 'Microwave satellite source identifier'),
-    ('HQobservationTime', 'min. into half hour', 'Microwave satellite observation time'),
-    ('IRprecipitation', 'mm/hr', 'IR-only precipitation estimate'),
-    ('IRkalmanFilterWeight', 'percent', 'Weighting of IR-only precipitation relative to the morphed merged '
-                                        'microwave-only precipitation'),
-    ('probabilityLiquidPrecipitation', 'percent', 'Probability of liquid precipitation phase'),
-    ('precipitationQualityIndex', 'n/a', 'Quality Index for precipitationCal field')
-]
-
-_HQprecipSource_values = {0: 'no observation',1: 'TMI',
-                          2: '(unused)',
-                          3: 'AMSR',
-                          4: 'SSMI',
-                          5: 'SSMIS',
-                          6: 'AMSU',
-                          7: 'MHS',
-                          8: 'SAPHIR',
-                          9: 'GMI',
-                          10: '(unused)',
-                          11: 'ATMS',
-                          12: 'AIRS',
-                          13: 'TOVS',
-                          14: 'CRIS',
-                          15: 'Spare CSI 1',
-                          16: 'Spare CSI 2',
-                          17: 'Spare CSI 3',
-                          18: 'Spare CSI 4',
-                          19: 'Spare CSI 5',
-                          20: 'Spare CTSS 1',
-                          21: 'Spare CTSS 2',
-                          22: 'Spare CTSS 3',
-                          23: 'Spare CTSS 4',
-                          24: 'Spare CTSS 5'}
-
-_GEO_TRANSFORMATION_PARAMS = {'originX': -180,
-                              'originY': 90,
-                              'pixelWidth': 0.10000000149011612,
-                              'pixelHeight': -0.10000000149011612}
+_REPOSITORIES = imerg_info['REPOSITORIES']
+_FIELD_KEYS = imerg_info['FIELD_KEYS']
 
 
 def get_imerg(start_time, latency='final', ftp=None):

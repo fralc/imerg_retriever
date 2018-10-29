@@ -1,6 +1,5 @@
 from gpm_utils import *
 
-
 # EXAMPLE 1:
 # retrieve a file from ftp repository (the start date is derived from a filename)
 filename = '3B-HHR.MS.MRG.3IMERG.20180104-S000000-E002959.0000.V05B.HDF5'
@@ -49,8 +48,9 @@ raster_italy.save_as_tiff('italy.tif')
 filename = '3B-HHR.MS.MRG.3IMERG.20180201-S090000-E092959.0540.V05B.HDF5'
 
 # Read the hdf5
+GEO_TRANSFORMATION_PARAMS = imerg_info['GEO_TRANSFORMATION_PARAMS']
 datasets = read_hdf5(filename)
-geot = build_geot(**_GEO_TRANSFORMATION_PARAMS)
+geot = build_geot(**GEO_TRANSFORMATION_PARAMS)
 rasters = datasets_to_rasters(datasets, geot)
 
 italy_lat_range = (35.49370, 47.09178)
@@ -59,3 +59,8 @@ rasters_ita = {}
 for k, r in rasters.items():
     rasters_ita[k] = r.extract(lat_range=italy_lat_range,
                                lon_range=italy_lon_range)
+
+from yaml import load
+with open('imerg_info.yaml', "r") as f:
+    _info = load(f)
+
