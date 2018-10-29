@@ -1,6 +1,7 @@
 *.whl
 .idea
 .ipynb_checkpoints
+credentials.yaml
 data
 documentation
 gpm_venv

@@ -1,6 +1,8 @@
 REPOSITORIES: {'final': 'arthurhou.pps.eosdis.nasa.gov',
                'early': 'jsimpson.pps.eosdis.nasa.gov',
-               'late': 'jsimpson.pps.eosdis.nasa.gov'}
+               'late': 'jsimpson.pps.eosdis.nasa.gov',
+               'web_nrt' : 'https://storm.pps.eosdis.nasa.gov/storm'
+}
 
 FIELD_KEYS: [dataType,
              satellite,

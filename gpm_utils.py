@@ -2,12 +2,13 @@
 """Functions to retrieve GPM files from PPS repositories
 """
 
-from ftplib import FTP
 from yaml import load
+from ftplib import FTP
+import urllib.request
 import h5py
 import gdal
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import matplotlib.pyplot as plt
 from gdal_utils import Raster, build_geot
@@ -19,7 +20,6 @@ _PASSWORD = _credentials['password']
 
 with open('imerg_info.yaml', "r") as f:
     imerg_info = load(f)
-
 _REPOSITORIES = imerg_info['REPOSITORIES']
 _FIELD_KEYS = imerg_info['FIELD_KEYS']
 
@@ -41,7 +41,8 @@ def get_imerg(start_time, latency='final', ftp=None):
     # TODO latency='early' and latency='late' are not implemented
     if latency in ['early', 'late']:
         raise NotImplementedError('EARLY and LATE latencies still are not implemented.')
-    elif latency != 'final':
+
+    if latency not in ['early', 'late', 'final']:
         raise ValueError('latency must be "EARLY", "LATE", or "FINAL".')
 
     folder = '/gpmdata/{}/{}/{}/imerg/'.format(start_time.strftime('%Y'),
@@ -70,6 +71,18 @@ def get_imerg(start_time, latency='final', ftp=None):
     if close_ftp:
         ftp.quit()
 
+    return filename
+
+
+def get_imerg_web(field_key_dict, start_time):
+    filename = build_filename(field_key_dict, start_time)
+    url = "{}/NRT?email={}&filename=data/imerg/{}/{}".format(
+        _REPOSITORIES['web_nrt'],
+        _USERNAME,
+        datetime.strftime(start_time, '%Y%m'),
+        filename
+    )
+    urllib.request.urlretrieve(url, filename)
     return filename
 
 
@@ -117,6 +130,16 @@ def filename_info(filename, deep=False):
     infos['extension'] = field_dict['extension']
 
     return infos
+
+
+def build_filename(field_key_dict, start_time):
+    field_key_dict['startDate-SstartTime-EendTime'] = "{}-S{}-E{}".format(
+        datetime.strftime(start_time, '%Y%m%d'),
+        datetime.strftime(start_time, '%H%M%S'),
+        datetime.strftime(start_time + timedelta(minutes=29, seconds=59), '%H%M%S'),
+    )
+    filename = ".".join([field_key_dict[k] for k in _FIELD_KEYS])
+    return filename
 
 
 def read_hdf5(hdf5_filename):
