@@ -1,5 +1,8 @@
+import os
+from datetime import datetime, timedelta
 from osgeo import gdal, ogr, osr
 import numpy as np
+import matplotlib.pyplot as plt
 
 # web references:
 # https://pcjericks.github.io/py-gdalogr-cookbook/raster_layers.html
@@ -145,13 +148,107 @@ class Raster(object):
         y_range = [mapCoords_to_pixelCoords(geot=self._geot, ygeo=y) for y in lat_range]
 
         array_extracted = self._array[y_range[1]:y_range[0], x_range[0]:x_range[1]]
-        geot_extracted = build_geot(originX=lon_range[0] - self._geot[1] / 2.,
-                                    originY=lat_range[1] - self._geot[5] / 2.,
+        originX = pixelCoords_to_mapCoords(x_range[0], 0, self._geot)[0]
+        originY = pixelCoords_to_mapCoords(0, y_range[1], self._geot)[1]
+        geot_extracted = build_geot(originX=originX,
+                                    originY=originY,
                                     pixelWidth=self._geot[1],
                                     pixelHeight=self._geot[5])
 
         return Raster(array_extracted, geot_extracted)
 
     def save_as_tiff(self, filename):
+        self._array[self._array == -9999.9] = np.nan
         array2raster(filename, self._geot, self._array)
+
+    def show(self):
+        plt.imshow(self.array)
+
+
+class GribData(object):
+    def __init__(self, filename):
+        self._raw_data, self._raw_data_dict = GribData.read_grib(filename)
+
+    def __getitem__(self, item):
+        return self._raw_data[item]
+
+    def __len__(self):
+        return len(self._raw_data)
+
+    def __getattr__(self, item):
+        return self._raw_data_dict[item]
+
+    def get_layers_names(self):
+        return self._raw_data_dict.keys()
+
+    @staticmethod
+    def read_grib(fn):
+        ds = gdal.Open(fn)
+        geot = ds.GetGeoTransform()
+        layers = []
+        layers_dict = {}
+        for i in range(ds.RasterCount):
+            band = ds.GetRasterBand(i + 1)
+            array = band.ReadAsArray()
+            array[array == ds.GetRasterBand(1).GetNoDataValue()] = np.nan
+            raster = Raster(array, geot)
+            metadata = ds.GetRasterBand(i + 1).GetMetadata_Dict()
+            layers.append(
+                (raster,
+                 GribData.parse_time(metadata),
+                 metadata,
+                 os.path.split(fn)[-1])
+            )
+            layers_dict[GribData.parse_time(metadata)] = layers[-1]
+        return layers, layers_dict
+
+    @staticmethod
+    def parse_time(metadata):
+
+        def get_date(string):
+            pos = np.argmax([len(s) for s in string.split(' ')])
+            date_string = string.split(' ')[pos]
+            return date_string
+
+        def build_delta(string):
+            date_string = get_date(string)
+            return timedelta(days=int(date_string) / (60*60*24))
+
+        start = datetime.strptime('01011970', '%d%m%Y')
+        est1 = start + build_delta(metadata['GRIB_REF_TIME']) + build_delta(metadata['GRIB_FORECAST_SECONDS'])
+        est2 = start + build_delta(metadata['GRIB_VALID_TIME'])
+        assert est1 == est2
+        return est1
+
+    @property
+    def rasters(self):
+        return [lyr[0] for lyr in self._raw_data]
+
+    @rasters.setter
+    def rasters(self, value):
+        raise ValueError("rasters cannot be set.")
+
+    @property
+    def dates(self):
+        return [lyr[1] for lyr in self._raw_data]
+
+    @dates.setter
+    def dates(self, value):
+        raise ValueError("dates cannot be set.")
+
+    @property
+    def metadatas(self):
+        return [lyr[2] for lyr in self._raw_data]
+
+    @metadatas.setter
+    def metadatas(self, value):
+        raise ValueError("metadatas cannot be set.")
+
+    @property
+    def filename(self):
+        return self._raw_data[0][3]
+
+    @filename.setter
+    def filename(self, value):
+        raise ValueError("filename cannot be set.")
 

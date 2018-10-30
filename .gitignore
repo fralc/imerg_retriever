@@ -1,6 +1,7 @@
 *.whl
 .idea
 .ipynb_checkpoints
+__pycache__
 credentials.yaml
 data
 documentation

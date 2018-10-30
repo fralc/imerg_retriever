@@ -32,7 +32,7 @@ plt.show()
 # EXAMPLE 3:
 # verify extraction function
 # Read the reference tif
-src_ds = gdal.Open('3B-HHR-E.MS.MRG.3IMERG.20180201-S090000-E092959.0540.V05B.30min.tif')
+src_ds = gdal.Open('data/3B-HHR-E.MS.MRG.3IMERG.20180201-S090000-E092959.0540.V05B.30min.tif')
 myarray = np.array(src_ds.GetRasterBand(1).ReadAsArray(), dtype=np.float64)
 geot = src_ds.GetGeoTransform()
 
@@ -60,7 +60,7 @@ for k, r in rasters.items():
     rasters_ita[k] = r.extract(lat_range=italy_lat_range,
                                lon_range=italy_lon_range)
 
-from yaml import load
-with open('imerg_info.yaml', "r") as f:
-    _info = load(f)
+
+
+
 

@@ -3,6 +3,7 @@
 """
 
 from yaml import load
+import os
 from ftplib import FTP
 import urllib.request
 import h5py
@@ -11,7 +12,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import logging
 import matplotlib.pyplot as plt
-from gdal_utils import Raster, build_geot
+from gdal_utils import Raster, GribData, build_geot
 
 with open('credentials.yaml', "r") as f:
     _credentials = load(f)
@@ -75,14 +76,16 @@ def get_imerg(start_time, latency='final', ftp=None):
 
 
 def get_imerg_web(field_key_dict, start_time):
+    # https://storm.pps.eosdis.nasa.gov/storm/NRT.jsp
     filename = build_filename(field_key_dict, start_time)
-    url = "{}/NRT?email={}&filename=data/imerg/{}/{}".format(
+    url = "{}/NRT?email={}&filename=data/imerg/late/{}/{}".format(
         _REPOSITORIES['web_nrt'],
         _USERNAME,
         datetime.strftime(start_time, '%Y%m'),
         filename
     )
-    urllib.request.urlretrieve(url, filename)
+    print(url)
+    urllib.request.urlretrieve(url, os.path.join('data', filename))
     return filename
 
 
@@ -138,6 +141,9 @@ def build_filename(field_key_dict, start_time):
         datetime.strftime(start_time, '%H%M%S'),
         datetime.strftime(start_time + timedelta(minutes=29, seconds=59), '%H%M%S'),
     )
+    field_key_dict['sequenceIndicator'] = str(int(
+        (int(datetime.strftime(start_time, '%H')) + int(datetime.strftime(start_time, '%M')) / 60.) / .5 * 30
+    ))
     filename = ".".join([field_key_dict[k] for k in _FIELD_KEYS])
     return filename
 
@@ -247,6 +253,30 @@ def _get_closer_filename(content, start_time):
     filename = content[np.argmin(deltas)]
     return filename
 
+
+class H5Data(GribData):
+    def __init__(self, filename):
+        self._geot = build_geot(**imerg_info['GEO_TRANSFORMATION_PARAMS'])
+        self._raw_data, self._raw_data_dict = H5Data.read_h5(filename, self._geot)
+        for k, v in self._raw_data_dict.items():
+            setattr(self, k, v)
+
+    @staticmethod
+    def read_h5(fn, geot):
+        raster_dict = hdf5_to_rasters(fn, geot)
+        infos = filename_info(fn, deep=True)
+        layers = []
+        layers_dict = {}
+        for k, v in raster_dict.items():
+            infos['Variable'] = k
+            layers.append(
+                (v,
+                 infos['timeUtcStart'],
+                 infos,
+                 os.path.split(fn)[-1])
+            )
+            layers_dict[k] = layers[-1]
+        return layers, layers_dict
 
 
 
